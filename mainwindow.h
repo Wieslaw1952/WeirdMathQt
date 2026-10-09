@@ -17,15 +17,16 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
 
 private slots:
-    void drawTriangle();
     void drawRandomTriangle();
     void drawRandomQuadrangle();
     void drawRandomPentagon();
+    void drawRandomHexagon();
     void drawUserFigure();
     void clearScreen();
 
 private:
     void drawPolygon(const QList<QPoint> &vertices);
+    void drawRegularPolygon(int count);
     void log(const QString &message);
 
     ChaosCanvas *m_canvas = nullptr;

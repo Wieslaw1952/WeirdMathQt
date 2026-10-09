@@ -2,12 +2,15 @@
 
 #include "chaoscanvas.h"
 
+#include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
+
+#include <QtMath>
 
 namespace {
 
@@ -53,18 +56,25 @@ MainWindow::MainWindow(QWidget *parent)
     m_log->setMaximumBlockCount(100);
     m_log->setFixedHeight(m_log->fontMetrics().lineSpacing() * 3 + 10);
 
-    auto addButton = [this](QHBoxLayout *row, const QString &text, void (MainWindow::*slot)()) {
+    auto makeButton = [this](const QString &text, auto slot) {
         auto *button = new QPushButton(text, this);
         connect(button, &QPushButton::clicked, this, slot);
-        row->addWidget(button);
+        return button;
     };
 
-    auto *figures = new QHBoxLayout;
-    addButton(figures, tr("Random Pentagon"), &MainWindow::drawRandomPentagon);
-    addButton(figures, tr("Random Quadrangle"), &MainWindow::drawRandomQuadrangle);
-    addButton(figures, tr("Random Triangle"), &MainWindow::drawRandomTriangle);
-    addButton(figures, tr("Triangle"), &MainWindow::drawTriangle);
-    addButton(figures, tr("Clear Screen"), &MainWindow::clearScreen);
+    // Two rows of preset figures; "Clear Screen" spans both rows.
+    auto *figures = new QGridLayout;
+    figures->addWidget(makeButton(tr("Random Hexagon"), &MainWindow::drawRandomHexagon), 0, 0);
+    figures->addWidget(makeButton(tr("Random Pentagon"), &MainWindow::drawRandomPentagon), 0, 1);
+    figures->addWidget(makeButton(tr("Random Quadrangle"), &MainWindow::drawRandomQuadrangle), 0, 2);
+    figures->addWidget(makeButton(tr("Random Triangle"), &MainWindow::drawRandomTriangle), 0, 3);
+    figures->addWidget(makeButton(tr("Regular Hexagon"), [this] { drawRegularPolygon(6); }), 1, 0);
+    figures->addWidget(makeButton(tr("Regular Pentagon"), [this] { drawRegularPolygon(5); }), 1, 1);
+    figures->addWidget(makeButton(tr("Regular Quadrangle"), [this] { drawRegularPolygon(4); }), 1, 2);
+    figures->addWidget(makeButton(tr("Regular Triangle"), [this] { drawRegularPolygon(3); }), 1, 3);
+    auto *clear = makeButton(tr("Clear Screen"), &MainWindow::clearScreen);
+    clear->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    figures->addWidget(clear, 0, 4, 2, 1);
 
     m_iterations = new QSpinBox(this);
     m_iterations->setRange(1, MaxIterations);
@@ -74,7 +84,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_iterations->setToolTip(tr("Number of points (iterations) for every figure"));
 
     auto *userRow = new QHBoxLayout;
-    addButton(userRow, tr("Your Figure"), &MainWindow::drawUserFigure);
+    userRow->addWidget(makeButton(tr("Your Figure"), &MainWindow::drawUserFigure));
     userRow->addWidget(new QLabel(tr("Points:"), this));
     userRow->addWidget(m_iterations);
     userRow->addWidget(m_log, 1);
@@ -98,13 +108,6 @@ MainWindow::MainWindow(QWidget *parent)
     log(tr("Click on the black area to place vertices, then press \"Your Figure\"."));
 }
 
-void MainWindow::drawTriangle()
-{
-    const int w = m_canvas->width();
-    const int h = m_canvas->height();
-    drawPolygon({QPoint(10, 10), QPoint(w - 10, 10), QPoint(w / 2, h - 10)});
-}
-
 void MainWindow::drawRandomTriangle()
 {
     drawPolygon(m_canvas->randomVertices(3));
@@ -118,6 +121,41 @@ void MainWindow::drawRandomQuadrangle()
 void MainWindow::drawRandomPentagon()
 {
     drawPolygon(m_canvas->randomVertices(5));
+}
+
+void MainWindow::drawRandomHexagon()
+{
+    drawPolygon(m_canvas->randomVertices(6));
+}
+
+void MainWindow::drawRegularPolygon(int count)
+{
+    // Unit polygon with a flat bottom edge (a vertex on top when count is odd),
+    // then scaled and centred so it fills about 90% of the canvas.
+    const double start = -M_PI / 2 + ((count % 2 == 0) ? M_PI / count : 0.0);
+    QList<QPointF> unit;
+    for (int i = 0; i < count; ++i) {
+        const double a = start + 2 * M_PI * i / count;
+        unit.append(QPointF(qCos(a), qSin(a)));
+    }
+    // Bounding box by hand: QRectF::united() ignores the zero-size rects of single points.
+    double left = unit.first().x(), right = left, top = unit.first().y(), bottom = top;
+    for (const QPointF &p : unit) {
+        left = qMin(left, p.x());
+        right = qMax(right, p.x());
+        top = qMin(top, p.y());
+        bottom = qMax(bottom, p.y());
+    }
+    const QRectF box(QPointF(left, top), QPointF(right, bottom));
+
+    const double scale = 0.9 * qMin(m_canvas->width() / box.width(),
+                                     m_canvas->height() / box.height());
+    const QPointF offset = QPointF(m_canvas->width(), m_canvas->height()) / 2
+                           - box.center() * scale;
+    QList<QPoint> vertices;
+    for (const QPointF &p : unit)
+        vertices.append((p * scale + offset).toPoint());
+    drawPolygon(vertices);
 }
 
 void MainWindow::drawUserFigure()
