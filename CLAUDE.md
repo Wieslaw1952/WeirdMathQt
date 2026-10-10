@@ -8,7 +8,11 @@ WeirdMath is a small Qt 6 Widgets (C++17) desktop app that draws Sierpinski-styl
 
 ## Build & run
 
-The project is normally built from Qt Creator. The existing build directory is `build/Desktop_Qt_6_12_0_Debug` (Unix Makefiles, Qt at `/home/wiesiek/Qt/6.12.0/gcc_64`).
+The project is normally built from Qt Creator, on both Linux and Windows. The code needs no platform-specific changes.
+
+### Linux
+
+The existing build directory is `build/Desktop_Qt_6_12_0_Debug` (Unix Makefiles, Qt at `/home/wiesiek/Qt/6.12.0/gcc_64`).
 
 ```bash
 # Configure (only needed for a fresh build dir)
@@ -18,6 +22,23 @@ cmake --build build/Desktop_Qt_6_12_0_Debug
 # Run
 ./build/Desktop_Qt_6_12_0_Debug/WeirdMath
 ```
+
+### Windows
+
+The project lives in `D:\Qt Programs\WeirdMathQt`, with Qt at `C:\Qt\6.12.0`. In Qt Creator use the "Desktop Qt 6.12.0 MinGW 64-bit" kit (MSVC2022 64-bit is also installed). From PowerShell, using the tools bundled with Qt (MinGW 13.1, Ninja, CMake):
+
+```powershell
+# Put the Qt toolchain on PATH for this shell
+$env:PATH = "C:\Qt\Tools\mingw1310_64\bin;C:\Qt\Tools\Ninja;C:\Qt\Tools\CMake_64\bin;C:\Qt\6.12.0\mingw_64\bin;" + $env:PATH
+# Configure (only needed for a fresh build dir)
+cmake -S . -B build/Desktop_Qt_6_12_0_MinGW_64_bit-Debug -G Ninja -DCMAKE_PREFIX_PATH=C:/Qt/6.12.0/mingw_64 -DCMAKE_BUILD_TYPE=Debug
+# Build
+cmake --build build/Desktop_Qt_6_12_0_MinGW_64_bit-Debug
+# Run (needs C:\Qt\6.12.0\mingw_64\bin on PATH for the Qt DLLs)
+.\build\Desktop_Qt_6_12_0_MinGW_64_bit-Debug\WeirdMath.exe
+```
+
+To run the exe outside this environment, copy the Qt DLLs next to it with `windeployqt` (in `C:\Qt\6.12.0\mingw_64\bin`). On Windows, `resources/weirdmath.rc` is compiled in, so the `.exe` file itself carries the icon.
 
 There are no tests and no lint configuration.
 
