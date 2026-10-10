@@ -20,7 +20,14 @@ qt_add_resources(WeirdMath "resources"
 )
 
 if(WIN32)
-    target_sources(WeirdMath PRIVATE resources/weirdmath.rc)
+    # Compiled in its own object library so the .rc gets none of WeirdMath's
+    # include dirs: MinGW windres does not quote them when calling the
+    # preprocessor, which breaks builds in paths with spaces.
+    add_library(WeirdMathIcon OBJECT resources/weirdmath.rc)
+    set_target_properties(WeirdMathIcon PROPERTIES
+        AUTOMOC OFF AUTOUIC OFF AUTORCC OFF
+    )
+    target_sources(WeirdMath PRIVATE $<TARGET_OBJECTS:WeirdMathIcon>)
 endif()
 
 target_link_libraries(WeirdMath PRIVATE Qt6::Widgets)
