@@ -38,7 +38,7 @@ cmake --build build/Desktop_Qt_6_12_0_MinGW_64_bit-Debug
 .\build\Desktop_Qt_6_12_0_MinGW_64_bit-Debug\WeirdMath.exe
 ```
 
-To run the exe outside this environment, copy the Qt DLLs next to it with `windeployqt` (in `C:\Qt\6.12.0\mingw_64\bin`). On Windows, `resources/weirdmath.rc` is compiled in, so the `.exe` file itself carries the icon.
+To run the exe outside this environment, copy the Qt DLLs next to it with `windeployqt` (in `C:\Qt\6.12.0\mingw_64\bin`). On Windows, `resources/weirdmath.rc` is compiled in, so the `.exe` file itself carries the icon (see Resources below for why it is built as a separate target).
 
 There are no tests and no lint configuration.
 
@@ -46,5 +46,5 @@ There are no tests and no lint configuration.
 
 - `ChaosCanvas` (QWidget) owns all the drawing. It renders into an off-screen `QImage` (`m_image`), so the picture survives repaints, and `paintEvent` only blits that image. `resizeEvent` copies the old image into a new black one of the new size. `runChaosGame(vertices, colors, iterations)` draws vertex markers, then repeatedly jumps to the integer midpoint between the current point and a random vertex. Each point gets the colour of the vertex it jumped towards (`colors[i]` belongs to `vertices[i]`). Left-clicks collect up to `MaxUserVertices` (11) user vertices and emit `userVertexAdded` or `userVertexRejected`.
 - `MainWindow` (QWidget, not QMainWindow) builds the layout in code (there are no `.ui` files): the canvas, a "Your Figure" button next to a 3-line read-only log, and a grid of preset-figure buttons: a "Random" row (3–6 random vertices), a "Regular" row (regular polygons scaled to about 90% of the canvas), and "Clear Screen" spanning both rows. It holds the colour palette (`vclColors()`, the VCL colour order) and the "Points" spin box (`m_iterations`, default 3M), which sets the iteration count for every figure. For preset figures, `figureColors(n)` uses the first n-1 palette colours and always makes the last vertex blue.
-- Resources: `resources/weirdmath.ico` is embedded through `qt_add_resources` (`:/resources/weirdmath.ico`) for the window icon. `weirdmath.rc` is added only on Windows, for the executable icon.
+- Resources: `resources/weirdmath.ico` is embedded through `qt_add_resources` (`:/resources/weirdmath.ico`) for the window icon. `weirdmath.rc` is added only on Windows, for the executable icon. It is compiled in a separate `WeirdMathIcon` OBJECT library (AUTOMOC/AUTOUIC/AUTORCC off) whose objects are linked into `WeirdMath`. Keep it that way: MinGW `windres` does not quote include dirs when it calls the preprocessor, so if the `.rc` were a source of `WeirdMath` it would get the `WeirdMath_autogen/include` path, and the build would fail in any directory with a space (e.g. `D:\Qt Programs\...`).
 - When adding source files, list them in `qt_add_executable` in `CMakeLists.txt`.
