@@ -40,6 +40,14 @@ cmake --build build/Desktop_Qt_6_12_0_MinGW_64_bit-Debug
 
 To run the exe outside this environment, copy the Qt DLLs next to it with `windeployqt` (in `C:\Qt\6.12.0\mingw_64\bin`). On Windows, `resources/weirdmath.rc` is compiled in, so the `.exe` file itself carries the icon (see Resources below for why it is built as a separate target).
 
+### Windows installer
+
+`installer/build-installer.ps1` builds Release, runs `windeployqt` into `build/deploy/WeirdMath`, and compiles `installer/WeirdMath.iss` with Inno Setup 6 (`winget install JRSoftware.InnoSetup`). The output is `build/installer/WeirdMath-<version>-setup.exe`, with the version taken from `project()` in `CMakeLists.txt`. Keep the `AppId` GUID in the `.iss` unchanged, so newer installers upgrade older installs.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
+```
+
 There are no tests and no lint configuration.
 
 ## Architecture
