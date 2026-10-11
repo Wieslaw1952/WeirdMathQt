@@ -1,0 +1,75 @@
+name: Build packages
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          arch: win64_mingw
+          tools: 'tools_mingw1310'
+          cache: true
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+      - name: Build installer
+        run: powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1 -QtDir "$env:QT_ROOT_DIR" -QtTools "$env:IQTA_TOOLS"
+      - name: Portable ZIP
+        run: |
+          $v = (Select-String -Path CMakeLists.txt -Pattern 'project\(\S+\s+VERSION\s+([\d.]+)').Matches[0].Groups[1].Value
+          Compress-Archive -Path build\deploy\WeirdMath -DestinationPath "build\installer\WeirdMath-$v-win64-portable.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WeirdMath-Windows
+          path: build/installer/*
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: build/installer/*
+
+  linux:
+    # Older Ubuntu, so the packages run on older distributions too (glibc).
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 \
+            libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+            libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 \
+            libegl1 libfontconfig1 libdbus-1-3 patchelf
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          arch: linux_gcc_64
+          cache: true
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+      - name: Package
+        working-directory: build
+        run: cpack
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WeirdMath-Linux
+          path: |
+            build/WeirdMath-*.deb
+            build/WeirdMath-*.tar.gz
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            build/WeirdMath-*.deb
+            build/WeirdMath-*.tar.gz

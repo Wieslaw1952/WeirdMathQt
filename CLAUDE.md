@@ -48,7 +48,21 @@ To run the exe outside this environment, copy the Qt DLLs next to it with `winde
 powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ```
 
+### CI and releases
+
+`.github/workflows/build.yml` builds on every push to `main`: the Windows installer (via `installer/build-installer.ps1`, Qt 6.8 MinGW) plus a portable ZIP, and the Linux `.deb`/`.tar.gz` on Ubuntu 22.04 (older glibc, so they run on more distributions). Pushing a `v*` tag attaches all of them to a GitHub release. Bump `project(... VERSION ...)` before tagging.
+
 There are no tests and no lint configuration.
+
+### Linux packages (run without Qt installed)
+
+```bash
+cmake -S . -B build/Release -DCMAKE_PREFIX_PATH=/home/wiesiek/Qt/6.12.0/gcc_64 -DCMAKE_BUILD_TYPE=Release
+cmake --build build/Release
+cd build/Release && cpack
+```
+
+On Linux this produces `WeirdMath-<ver>-Linux.tar.gz` (portable, run `bin/WeirdMath`) and `.deb` (installs to `/opt/WeirdMath`, adds `weirdmath` command and menu entry). Qt libraries and plugins are bundled by `qt_deploy_runtime_dependencies`; plugin types that would pull in Qt Quick are excluded on purpose. Packages run only on distributions with glibc at least as new as the build machine's.
 
 ## Architecture
 

@@ -1,11 +1,15 @@
 # Builds the Windows installer: Release build -> windeployqt -> Inno Setup.
 # Usage (from any directory):  powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 # Output: build\installer\WeirdMath-<version>-setup.exe
+# The defaults match the local Qt install; CI passes its own -QtDir/-QtTools.
+
+param(
+    [string]$QtDir   = 'C:\Qt\6.12.0\mingw_64',
+    [string]$QtTools = 'C:\Qt\Tools'
+)
 
 $ErrorActionPreference = 'Stop'
 
-$QtDir    = 'C:\Qt\6.12.0\mingw_64'
-$QtTools  = 'C:\Qt\Tools'
 $Root     = Split-Path -Parent $PSScriptRoot
 $BuildDir = Join-Path $Root 'build\Desktop_Qt_6_12_0_MinGW_64_bit-Release'
 $Deploy   = Join-Path $Root 'build\deploy\WeirdMath'

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=WeirdMath
+Comment=Chaos-game fractals
+Exec=/opt/WeirdMath/bin/WeirdMath
+Icon=weirdmath
+Terminal=false
+Categories=Education;Graphics;
