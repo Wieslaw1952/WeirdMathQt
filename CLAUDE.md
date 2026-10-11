@@ -50,7 +50,7 @@ powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 
 ### CI and releases
 
-`.github/workflows/build.yml` builds on every push to `main`: the Windows installer (via `installer/build-installer.ps1`, Qt 6.8 MinGW) plus a portable ZIP, and the Linux `.deb`/`.tar.gz` on Ubuntu 22.04 (older glibc, so they run on more distributions). Pushing a `v*` tag attaches all of them to a GitHub release. Bump `project(... VERSION ...)` before tagging.
+`.github/workflows/build.yml` builds on every push to `main`: the Windows installer (via `installer/build-installer.ps1`, Qt 6.8 MinGW) plus a portable ZIP, and the Linux `.deb`/`.tar.gz` on Ubuntu 22.04 with Qt 6.12 (the deploy options used in `CMakeLists.txt` need Qt 6.11+) (older glibc, so they run on more distributions). Pushing a `v*` tag attaches all of them to a GitHub release. Bump `project(... VERSION ...)` before tagging.
 
 There are no tests and no lint configuration.
 
